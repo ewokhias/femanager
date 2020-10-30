@@ -17,7 +17,7 @@
 	<p>
 		<f:translate key="emailInvitationText2" />
 		<br>
-		<f:link.action action="edit" controller="Invitation" absolute="1" arguments="{user:user, hash:hash}">
+		<f:link.action action="edit" controller="Invitation" absolute="1" arguments="{user:user, hash:hash}" addQueryString="1" addQueryStringMethod="GET">
 			<f:translate key="emailInvitationLinkConfirm" />
 		</f:link.action>
 	</p>
@@ -25,7 +25,7 @@
 	<p>
 		<f:translate key="emailInvitationText3" />
 		<br>
-		<f:link.action action="delete" controller="Invitation" absolute="1" arguments="{user:user, hash:hash}">
+		<f:link.action action="delete" controller="Invitation" absolute="1" arguments="{user:user, hash:hash}" addQueryString="1" addQueryStringMethod="GET">
 			<f:translate key="emailInvitationLinkConfirmRefused" />
 		</f:link.action>
 	</p>

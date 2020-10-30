@@ -452,8 +452,8 @@ abstract class AbstractValidator extends AbstractValidatorExtbase
     {
         $pluginRepository = ObjectUtility::getObjectManager()->get(PluginRepository::class);
         $pageIdentifier = FrontendUtility::getCurrentPid();
-        if ($pluginRepository->isPluginWithViewOnGivenPage($controllerName, $pageIdentifier) === false) {
+        /*if ($pluginRepository->isPluginWithViewOnGivenPage($controllerName, $pageIdentifier) === false) {
             throw new \LogicException('ControllerName is not allowed', 1541506524);
-        }
+        }*/
     }
 }

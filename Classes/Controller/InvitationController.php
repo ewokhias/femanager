@@ -110,7 +110,12 @@ class InvitationController extends AbstractController
         $this->eventDispatcher->dispatch(new InviteUserConfirmedEvent($user));
 
         $this->redirectByAction('invitation','redirectStep1');
-        $this->redirect('new');
+        $uriBuilder = $this->getControllerContext()->getUriBuilder();
+        $uri = $uriBuilder->reset()
+            ->setAddQueryString(true)
+            ->setAddQueryStringMethod('GET')
+            ->uriFor('new');
+        $this->redirectToUri($uri);
     }
 
     /**
@@ -182,7 +187,12 @@ class InvitationController extends AbstractController
         $this->persistenceManager->persistAll();
         $this->eventDispatcher->dispatch(new InviteUserUpdateEvent($user));
         $this->redirectByAction('invitation', 'redirectPasswordChanged');
-        $this->redirect('status');
+        $uriBuilder = $this->getControllerContext()->getUriBuilder();
+        $uri = $uriBuilder->reset()
+            ->setAddQueryString(true)
+            ->setAddQueryStringMethod('GET')
+            ->uriFor('status');
+        $this->redirectToUri($uri);
     }
 
     /**
