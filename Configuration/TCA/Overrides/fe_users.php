@@ -4,6 +4,44 @@
  * Table configuration fe_users
  */
 $feUsersColumns = [
+    'nationality' => [
+        'exclude' => 1,
+        'label' => 'Staatsangehörigkeit',
+        'config' => [
+            'type' => 'input',
+            'size' => 20,
+            'eval' => 'trim',
+            'max' => 40
+        ]
+    ],
+    'family_count' => [
+        'exclude' => 1,
+        'label' => 'Anzahl Familienmitglieder',
+        'config' => [
+            'type' => 'input',
+            'size' => 10,
+            'eval' => 'int',
+        ]
+    ],
+    'title_suffix' => [
+        'exclude' => 1,
+        'label' => 'Titelzusatz',
+        'config' => [
+            'type' => 'input',
+            'size' => 20,
+            'eval' => 'trim',
+            'max' => 40
+        ]
+    ],
+    'portego_id' => [
+        'exclude' => 1,
+        'label' => 'Portego ID',
+        'config' => [
+            'type' => 'input',
+            'size' => 10,
+            'eval' => 'int',
+        ]
+    ],
     'gender' => [
         'exclude' => 0,
         'label' => 'LLL:EXT:femanager/Resources/Private/Language/locallang_db.xlf:' .
@@ -192,4 +230,17 @@ if ($staticInfoTablesIsLoaded) {
 \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes(
     'fe_users',
     '--div--;LLL:EXT:femanager/Resources/Private/Language/locallang_db.xlf:fe_users.tab, ' . $fields
+);
+
+\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes(
+    'fe_users',
+    'title_suffix,portego_id',
+    '',
+    'after:name'
+);
+\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes(
+    'fe_users',
+    'family_count,nationality',
+    '',
+    'after:date_of_birth'
 );

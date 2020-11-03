@@ -96,6 +96,26 @@ class User extends FrontendUser
     protected $state = '';
 
     /**
+     * @var string
+     */
+    protected $nationality;
+
+    /**
+     * @var ?int
+     */
+    protected $familyCount;
+
+    /**
+     * @var string
+     */
+    protected $titleSuffix;
+
+    /**
+     * @var int
+     */
+    protected $portegoId;
+
+    /**
      * @return void
      */
     public function removeAllUsergroups()
@@ -412,5 +432,69 @@ class User extends FrontendUser
     public function _isDirty($propertyName = null)
     {
         return $this->getIgnoreDirty() ? false : parent::_isDirty($propertyName);
+    }
+
+    /**
+     * @return string
+     */
+    public function getNationality()
+    {
+        return $this->nationality;
+    }
+
+    /**
+     * @param string $nationality
+     */
+    public function setNationality(string $nationality)
+    {
+        $this->nationality = $nationality;
+    }
+
+    /**
+     * @return int
+     */
+    public function getFamilyCount()
+    {
+        return $this->familyCount;
+    }
+
+    /**
+     * @param int $familyCount
+     */
+    public function setFamilyCount(int $familyCount)
+    {
+        $this->familyCount = $familyCount;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTitleSuffix()
+    {
+        return $this->titleSuffix;
+    }
+
+    /**
+     * @param string $titleSuffix
+     */
+    public function setTitleSuffix(string $titleSuffix)
+    {
+        $this->titleSuffix = $titleSuffix;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPortegoId()
+    {
+        return $this->portegoId;
+    }
+
+    /**
+     * @param int $portegoId
+     */
+    public function setPortegoId(int $portegoId)
+    {
+        $this->portegoId = $portegoId;
     }
 }

@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+
 namespace In2code\Femanager\Controller;
 
 use In2code\Femanager\Domain\Model\Log;
@@ -11,7 +12,6 @@ use In2code\Femanager\Event\InviteUserUpdateEvent;
 use In2code\Femanager\Utility\FrontendUtility;
 use In2code\Femanager\Utility\HashUtility;
 use In2code\Femanager\Utility\LocalizationUtility;
-use In2code\Femanager\Utility\LogUtility;
 use In2code\Femanager\Utility\StringUtility;
 use In2code\Femanager\Utility\UserUtility;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
@@ -22,6 +22,22 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class InvitationController extends AbstractController
 {
+
+
+    /**
+     * @var \Vision05\EbgPortego\Domain\Repository\SalesProspectRepository
+     */
+    protected $salesProspectRepository;
+
+    /**
+     * @param \Vision05\EbgPortego\Domain\Repository\SalesProspectRepository $salesProspectRepository
+     */
+    public function __construct(
+        \Vision05\EbgPortego\Domain\Repository\SalesProspectRepository $salesProspectRepository
+    )
+    {
+        $this->salesProspectRepository = $salesProspectRepository;
+    }
 
     /**
      * action new
@@ -109,12 +125,12 @@ class InvitationController extends AbstractController
 
         $this->eventDispatcher->dispatch(new InviteUserConfirmedEvent($user));
 
-        $this->redirectByAction('invitation','redirectStep1');
+        $this->redirectByAction('invitation', 'redirectStep1');
         $uriBuilder = $this->getControllerContext()->getUriBuilder();
         $uri = $uriBuilder->reset()
             ->setAddQueryString(true)
             ->setAddQueryStringMethod('GET')
-            ->uriFor('new');
+            ->uriFor('status');
         $this->redirectToUri($uri);
     }
 
@@ -133,6 +149,25 @@ class InvitationController extends AbstractController
         $this->persistenceManager->persistAll();
 
         $this->eventDispatcher->dispatch(new InviteUserEditEvent($user, $hash));
+
+        $salesProspect = $this->salesProspectRepository->getProspectByEmail($user->getEmail());
+
+        if (isset($salesProspect) && empty($user->getPortegoId())) {
+            $user->setPortegoId($salesProspect->getId());
+            $user->setCountry($salesProspect->getCountry());
+            $user->setCity($salesProspect->getCity());
+            $user->setZip($salesProspect->getPostCode());
+            $user->setAddress($salesProspect->getStreet());
+            $user->setTitle($salesProspect->getPreTitle());
+            $user->setTitleSuffix($salesProspect->getPostTitle());
+            $user->setTelephone($salesProspect->getPhone());
+            $user->setFirstName($salesProspect->getFirstName());
+            $user->setLastName($salesProspect->getLastName());
+            $user->setNationality($salesProspect->getCitizenship());
+            $user->setGender($this->genderStringToInt($salesProspect->getGender()));
+            $user->setFamilyCount($salesProspect->getFamilySize());
+            $user->setDateOfBirth($salesProspect->getBirthdate());
+        }
 
         $this->view->assignMultiple(
             [
@@ -185,6 +220,7 @@ class InvitationController extends AbstractController
         UserUtility::hashPassword($user, $this->settings['invitation']['misc']['passwordSave']);
         $this->userRepository->update($user);
         $this->persistenceManager->persistAll();
+        UserUtility::login($user, $this->allConfig['persistence']['storagePid']);
         $this->eventDispatcher->dispatch(new InviteUserUpdateEvent($user));
         $this->redirectByAction('invitation', 'redirectPasswordChanged');
         $uriBuilder = $this->getControllerContext()->getUriBuilder();
@@ -239,14 +275,24 @@ class InvitationController extends AbstractController
 
             $this->userRepository->remove($user);
             $this->redirectByAction('invitation', 'redirectDelete');
-            $this->redirect('status');
+            $uriBuilder = $this->getControllerContext()->getUriBuilder();
+            $uri = $uriBuilder->reset()
+                ->setAddQueryString(true)
+                ->setAddQueryStringMethod('GET')
+                ->uriFor('status');
+            $this->redirectToUri($uri);
         } else {
             $this->addFlashMessage(
                 LocalizationUtility::translateByState(Log::STATUS_INVITATIONHASHERROR),
                 '',
                 FlashMessage::ERROR
             );
-            $this->redirect('status');
+            $uriBuilder = $this->getControllerContext()->getUriBuilder();
+            $uri = $uriBuilder->reset()
+                ->setAddQueryString(true)
+                ->setAddQueryStringMethod('GET')
+                ->uriFor('status');
+            $this->redirectToUri($uri);
         }
     }
 
@@ -289,5 +335,16 @@ class InvitationController extends AbstractController
         );
         $this->forward('status');
         return false;
+    }
+
+    private function genderStringToInt(string $gender): ?int
+    {
+        $result = null;
+        if ($gender === "Male") {
+            $result = 0;
+        } elseif ($gender === "Female") {
+            $result = 1;
+        }
+        return $result;
     }
 }
