@@ -16,6 +16,7 @@ use In2code\Femanager\Utility\StringUtility;
 use In2code\Femanager\Utility\UserUtility;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Property\TypeConverter\DateTimeConverter;
 
 /**
  * Class InvitationController
@@ -186,6 +187,20 @@ class InvitationController extends AbstractController
         }
 
         $this->assignForAll();
+    }
+
+    public function initializeUpdateAction()
+    {
+        if ($this->arguments->hasArgument('user')) {
+            $this->arguments['user']
+                ->getPropertyMappingConfiguration()
+                ->forProperty('dateOfBirth')
+                ->setTypeConverterOption(
+                    DateTimeConverter::class,
+                    DateTimeConverter::CONFIGURATION_DATE_FORMAT,
+                    LocalizationUtility::translate('tx_femanager_domain_model_user.dateFormat')
+                );
+        }
     }
 
     /**
