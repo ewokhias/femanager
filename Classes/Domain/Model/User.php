@@ -96,7 +96,7 @@ class User extends FrontendUser
     protected $state = '';
 
     /**
-     * @var string
+     * @var ?string
      */
     protected $nationality;
 
@@ -106,7 +106,7 @@ class User extends FrontendUser
     protected $familyCount;
 
     /**
-     * @var string
+     * @var ?string
      */
     protected $titleSuffix;
 
@@ -435,7 +435,7 @@ class User extends FrontendUser
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getNationality()
     {
@@ -443,9 +443,9 @@ class User extends FrontendUser
     }
 
     /**
-     * @param string $nationality
+     * @param string|null $nationality
      */
-    public function setNationality(string $nationality)
+    public function setNationality(?string $nationality)
     {
         $this->nationality = $nationality;
     }
@@ -467,7 +467,7 @@ class User extends FrontendUser
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getTitleSuffix()
     {
@@ -475,9 +475,9 @@ class User extends FrontendUser
     }
 
     /**
-     * @param string $titleSuffix
+     * @param string|null $titleSuffix
      */
-    public function setTitleSuffix(string $titleSuffix)
+    public function setTitleSuffix(?string $titleSuffix)
     {
         $this->titleSuffix = $titleSuffix;
     }
