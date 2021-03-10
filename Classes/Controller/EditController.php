@@ -175,8 +175,12 @@ class EditController extends AbstractController
         $this->logUtility->log(Log::STATUS_PROFILEDELETE, $user);
         $this->addFlashMessage(LocalizationUtility::translateByState(Log::STATUS_PROFILEDELETE));
         $this->userRepository->remove($user);
-        $this->redirectByAction('delete');
-        $this->redirect('edit');
+        $this->uriBuilder->setTargetPageUid(56);
+        $this->uriBuilder->setLinkAccessRestrictedPages(true);
+        $link = $this->uriBuilder->build();
+        $this->redirectToUri(StringUtility::removeDoubleSlashesFromUri($link));
+        // $this->redirectByAction('delete');
+        // $this->redirect('edit');
     }
 
     /**
