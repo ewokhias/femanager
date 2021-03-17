@@ -451,7 +451,7 @@ class User extends FrontendUser
     }
 
     /**
-     * @return int
+     * @return int|null
      */
     public function getFamilyCount()
     {
@@ -459,9 +459,9 @@ class User extends FrontendUser
     }
 
     /**
-     * @param int $familyCount
+     * @param int|null $familyCount
      */
-    public function setFamilyCount(int $familyCount)
+    public function setFamilyCount(?int $familyCount)
     {
         $this->familyCount = $familyCount;
     }
