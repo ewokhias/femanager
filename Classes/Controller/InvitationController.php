@@ -14,6 +14,7 @@ use In2code\Femanager\Utility\HashUtility;
 use In2code\Femanager\Utility\LocalizationUtility;
 use In2code\Femanager\Utility\StringUtility;
 use In2code\Femanager\Utility\UserUtility;
+use TYPO3\CMS\Core\Messaging\AbstractMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Property\TypeConverter\DateTimeConverter;
@@ -145,6 +146,29 @@ class InvitationController extends AbstractController
     public function editAction($user, $hash = null)
     {
         $user = $this->userRepository->findByUid($user);
+
+        // User must exist and hash must be valid
+        if ($user === null || !HashUtility::validHash($hash, $user)) {
+            $this->addFlashMessage(LocalizationUtility::translate('createFailedProfile'), '', AbstractMessage::ERROR);
+            $uriBuilder = $this->getControllerContext()->getUriBuilder();
+            $uri = $uriBuilder->reset()
+                ->setAddQueryString(true)
+                ->setAddQueryStringMethod('GET')
+                ->uriFor('status');
+            $this->redirectToUri($uri);
+        }
+
+        // User must not be deleted (deleted = 0) and not be activated (disable = 1)
+        if ($user->getDisable() == 0) {
+            $this->addFlashMessage(LocalizationUtility::translate('userAlreadyConfirmed'), '', AbstractMessage::ERROR);
+            $uriBuilder = $this->getControllerContext()->getUriBuilder();
+            $uri = $uriBuilder->reset()
+                ->setAddQueryString(true)
+                ->setAddQueryStringMethod('GET')
+                ->uriFor('status');
+            $this->redirectToUri($uri);
+        }
+
         $user->setDisable(false);
         $this->userRepository->update($user);
         $this->persistenceManager->persistAll();
@@ -177,15 +201,6 @@ class InvitationController extends AbstractController
             ]
         );
 
-        if (!HashUtility::validHash($hash, $user)) {
-            if ($user !== null) {
-                // delete user for security reasons
-                $this->userRepository->remove($user);
-            }
-            $this->addFlashMessage(LocalizationUtility::translate('createFailedProfile'), '', FlashMessage::ERROR);
-            $this->forward('status');
-        }
-
         $this->assignForAll();
     }
 
@@ -207,12 +222,26 @@ class InvitationController extends AbstractController
      * action update
      *
      * @param \In2code\Femanager\Domain\Model\User $user
+     * @param string $hash
      * @TYPO3\CMS\Extbase\Annotation\Validate("In2code\Femanager\Domain\Validator\ServersideValidator", param="user")
      * @TYPO3\CMS\Extbase\Annotation\Validate("In2code\Femanager\Domain\Validator\PasswordValidator", param="user")
      * @return void
      */
-    public function updateAction($user)
+    public function updateAction($user, $hash = null)
     {
+        if (!HashUtility::validHash($hash, $user)) {
+            $this->addFlashMessage(
+                LocalizationUtility::translateByState(Log::STATUS_PROFILEUPDATEREFUSEDSECURITY),
+                '',
+                AbstractMessage::ERROR
+            );
+            $uriBuilder = $this->getControllerContext()->getUriBuilder();
+            $uri = $uriBuilder->reset()
+                ->setAddQueryString(true)
+                ->setAddQueryStringMethod('GET')
+                ->uriFor('status');
+            $this->redirectToUri($uri);
+        }
         $this->addFlashMessage(LocalizationUtility::translate('createAndInvitedFinished'));
         $this->logUtility->log(Log::STATUS_INVITATIONPROFILEENABLED, $user);
         if ($this->settings['invitation']['notifyAdmin']) {
@@ -266,7 +295,7 @@ class InvitationController extends AbstractController
     {
         $user = $this->userRepository->findByUid($user);
 
-        if (HashUtility::validHash($hash, $user)) {
+        if ($user !== null && HashUtility::validHash($hash, $user)) {
             $this->logUtility->log(Log::STATUS_PROFILEDELETE, $user);
             $this->addFlashMessage(LocalizationUtility::translateByState(Log::STATUS_INVITATIONPROFILEDELETEDUSER));
 
