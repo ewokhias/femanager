@@ -18,13 +18,17 @@ use TYPO3\CMS\Core\Messaging\AbstractMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Property\TypeConverter\DateTimeConverter;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Vision05\EbgPortego\Domain\Model\SalesProspectCreate;
 
 /**
  * Class InvitationController
  */
-class InvitationController extends AbstractController
+class InvitationController extends AbstractController implements LoggerAwareInterface
 {
 
+    use LoggerAwareTrait;
 
     /**
      * @var \Vision05\EbgPortego\Domain\Repository\SalesProspectRepository
@@ -51,6 +55,11 @@ class InvitationController extends AbstractController
         $this->allowedUserForInvitationNewAndCreate();
         $this->view->assign('allUserGroups', $this->allUserGroups);
         $this->assignForAll();
+    }
+
+    public function initializeCreateAction()
+    {
+        $this->logger->warning("Initializing create action. Parameters are: " . print_r($this->request->getArguments(), true));
     }
 
     /**
@@ -149,6 +158,13 @@ class InvitationController extends AbstractController
 
         // User must exist and hash must be valid
         if ($user === null || !HashUtility::validHash($hash, $user)) {
+
+            if ($user === null) {
+                $this->logger->warning("Confirming email failed: user does not exist");
+            } else {
+                $this->logger->warning("Confirming email failed with hash mismatch for user ."  . $user->getEmail());
+            }
+
             $this->addFlashMessage(LocalizationUtility::translate('createFailedProfile'), '', AbstractMessage::ERROR);
             $uriBuilder = $this->getControllerContext()->getUriBuilder();
             $uri = $uriBuilder->reset()
@@ -157,6 +173,8 @@ class InvitationController extends AbstractController
                 ->uriFor('status');
             $this->redirectToUri($uri);
         }
+
+        $this->logger->warning("Confirming email for user ."  . $user->getEmail());
 
         // User must not be deleted (deleted = 0) and not be activated (disable = 1)
         if ($user->getDisable() == 0) {
@@ -175,7 +193,12 @@ class InvitationController extends AbstractController
 
         $this->eventDispatcher->dispatch(new InviteUserEditEvent($user, $hash));
 
+        $this->logger->warning("Trying to call getProspectByEmail."  . $user->getEmail());
+
         $salesProspect = $this->salesProspectRepository->getProspectByEmail($user->getEmail());
+
+        $this->logger->warning("Successfully called getProspectByEmail." . $user->getEmail());
+
 
         if (isset($salesProspect) && empty($user->getPortegoId())) {
             $user->setPortegoId($salesProspect->getId());
@@ -215,6 +238,8 @@ class InvitationController extends AbstractController
                     DateTimeConverter::CONFIGURATION_DATE_FORMAT,
                     LocalizationUtility::translate('tx_femanager_domain_model_user.dateFormat')
                 );
+        } else {
+
         }
     }
 
@@ -229,7 +254,9 @@ class InvitationController extends AbstractController
      */
     public function updateAction($user, $hash = null)
     {
+        $this->logger->warning("Trying to update user  "  . $user->getEmail());
         if (!HashUtility::validHash($hash, $user)) {
+            $this->logger->warning("Hash mismatch for user  "  . $user->getEmail());
             $this->addFlashMessage(
                 LocalizationUtility::translateByState(Log::STATUS_PROFILEUPDATEREFUSEDSECURITY),
                 '',
@@ -262,8 +289,16 @@ class InvitationController extends AbstractController
         }
         $user = UserUtility::overrideUserGroup($user, $this->settings, 'invitation');
         UserUtility::hashPassword($user, $this->settings['invitation']['misc']['passwordSave']);
+
+        if (!$this->ensureInPortego($user)) {
+            $this->logger->warning("Problem while ensuring prospect for user  "  . $user->getEmail());
+        }
+
         $this->userRepository->update($user);
         $this->persistenceManager->persistAll();
+
+        $this->logger->warning("Updated and persisted user  "  . $user->getEmail());
+
         UserUtility::login($user, $this->allConfig['persistence']['storagePid']);
         $this->eventDispatcher->dispatch(new InviteUserUpdateEvent($user));
         $this->redirectByAction('invitation', 'redirectPasswordChanged');
@@ -390,5 +425,47 @@ class InvitationController extends AbstractController
             $result = 1;
         }
         return $result;
+    }
+
+    private function genderIntToString(int $gender): string
+    {
+        $result = "NoInformation";
+        if ($gender === 0) {
+            $result = "Male";
+        } elseif ($gender === 1) {
+            $result = "Female";
+        }
+        return $result;
+    }
+
+    private function ensureInPortego(User $user): bool {
+        $this->logger->warning("Trying to ensure prospect for "  . $user->getEmail());
+        $salesProspectCreate = new SalesProspectCreate(
+            $user->getFirstName(),
+            $user->getLastName(),
+            $user->getEmail(),
+            $user->getTelephone(),
+            $user->getTitle(),
+            $user->getTitleSuffix(),
+            $this->genderIntToString($user->getGender()),
+            !empty($user->getDateOfBirth()) ? $user->getDateOfBirth()->format('Y-m-d') : null,
+            $user->getNationality(),
+            $user->getFamilyCount(),
+            $user->getAddress(),
+            $user->getZip(),
+            $user->getCity(),
+            $user->getCountry()
+        );
+        $responseEmptyResult = $this->salesProspectRepository->ensureProspect($salesProspectCreate);
+
+        $this->logger->warning("Ensure Portego repsonse for user "  . $user->getEmail() . " is: " . $responseEmptyResult->getMessage());
+
+        if (!empty($responseEmptyResult->getId())) {
+            $user->setPortegoId($responseEmptyResult->getId());
+            $this->logger->warning("Ensured prospect for user "  . $user->getEmail());
+            return true;
+        }
+
+        return false;
     }
 }

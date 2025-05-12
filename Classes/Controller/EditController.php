@@ -15,15 +15,35 @@ use In2code\Femanager\Utility\LogUtility;
 use In2code\Femanager\Utility\ObjectUtility;
 use In2code\Femanager\Utility\StringUtility;
 use In2code\Femanager\Utility\UserUtility;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Exception\UnsupportedRequestTypeException;
+use Vision05\EbgPortego\Domain\Model\SalesProspectUpdate;
 
 /**
  * Class EditController
  */
-class EditController extends AbstractController
+class EditController extends AbstractController implements LoggerAwareInterface
 {
+
+    use LoggerAwareTrait;
+
+    /**
+     * @var \Vision05\EbgPortego\Domain\Repository\SalesProspectRepository
+     */
+    protected $salesProspectRepository;
+
+    /**
+     * @param \Vision05\EbgPortego\Domain\Repository\SalesProspectRepository $salesProspectRepository
+     */
+    public function __construct(
+        \Vision05\EbgPortego\Domain\Repository\SalesProspectRepository $salesProspectRepository
+    )
+    {
+        $this->salesProspectRepository = $salesProspectRepository;
+    }
 
     /**
      * @return void
@@ -76,6 +96,7 @@ class EditController extends AbstractController
         if (!empty($this->settings['edit']['confirmByAdmin'])) {
             $this->updateRequest($user);
         } else {
+            $this->updateInPortego($user);
             $this->updateAllConfirmed($user);
         }
         $this->redirect('edit');
@@ -171,6 +192,7 @@ class EditController extends AbstractController
      */
     public function deleteAction(User $user)
     {
+        $this->deleteInPortego($user);
         $this->eventDispatcher->dispatch(new DeleteUserEvent($user));
         $this->logUtility->log(Log::STATUS_PROFILEDELETE, $user);
         $this->addFlashMessage(LocalizationUtility::translateByState(Log::STATUS_PROFILEDELETE));
@@ -224,5 +246,40 @@ class EditController extends AbstractController
         if ($this->settings['edit']['fillEmailWithUsername'] === '1') {
             $user->setEmail($user->getUsername());
         }
+    }
+
+    private function updateInPortego(User $user): bool {
+        $this->logger->warning("Trying to update prospect for " . $user->getEmail());
+        $salesProspectUpdate = new SalesProspectUpdate(
+            $user->getPortegoId(),
+            $user->getFirstName(),
+            $user->getLastName(),
+            $user->getEmail(),
+            $user->getTelephone(),
+            $user->getTitle(),
+            $user->getTitleSuffix(),
+            $this->genderIntToString($user->getGender()),
+            !empty($user->getDateOfBirth()) ? $user->getDateOfBirth()->format('Y-m-d') : null,
+            $user->getNationality(),
+            $user->getFamilyCount(),
+            $user->getAddress(),
+            $user->getZip(),
+            $user->getCity(),
+            $user->getCountry()
+        );
+        $responseEmptyResult = $this->salesProspectRepository->updateProspect($salesProspectUpdate);
+
+        $this->logger->warning("Update Portego repsonse for user " . $user->getEmail() . " is: " . $responseEmptyResult->getMessage());
+
+        return true;
+    }
+
+    private function deleteInPortego(User $user): bool {
+        $this->logger->warning("Trying to delete prospect for " . $user->getEmail());
+        $responseEmptyResult = $this->salesProspectRepository->deleteProspect($user->getPortegoId());
+
+        $this->logger->warning("Delete Portego repsonse for user " . $user->getEmail() . " is: " . $responseEmptyResult->getMessage());
+
+        return true;
     }
 }
