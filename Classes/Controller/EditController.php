@@ -89,6 +89,9 @@ class EditController extends AbstractController implements LoggerAwareInterface
     public function updateAction(User $user)
     {
         $this->redirectIfDirtyObject($user);
+        if ($user->getDateOfBirth() === null) {
+            $user->setDateOfBirth(0);
+        }
         $user = FrontendUtility::forceValues($user, $this->config['edit.']['forceValues.']['beforeAnyConfirmation.']);
         $this->emailForUsername($user);
         UserUtility::convertPassword($user, $this->settings['edit']['misc']['passwordSave']);
