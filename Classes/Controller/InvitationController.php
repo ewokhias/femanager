@@ -156,6 +156,20 @@ class InvitationController extends AbstractController implements LoggerAwareInte
     {
         $user = $this->userRepository->findByUid($user);
 
+        /* Does not make sense, unless new registration would lead to new hash.
+        if ($user !== null && $user->getCrdate() < (new \DateTime())->modify('-3 days') && !$user->getTxFemanagerInvitationcompleted()) {
+            $this->userRepository->remove($user);
+            $this->addFlashMessage(LocalizationUtility::translate('deletedOldInvitation'), '', AbstractMessage::ERROR);
+            $uriBuilder = $this->getControllerContext()->getUriBuilder();
+            $uri = $uriBuilder->reset()
+                ->setAddQueryString(true)
+                ->setAddQueryStringMethod('GET')
+                ->uriFor('status');
+            $this->redirectToUri($uri);
+        }
+        */
+
+
         // User must exist and hash must be valid
         if ($user === null || !HashUtility::validHash($hash, $user)) {
 
@@ -174,10 +188,8 @@ class InvitationController extends AbstractController implements LoggerAwareInte
             $this->redirectToUri($uri);
         }
 
-        $this->logger->warning("Confirming email for user ."  . $user->getEmail());
-
         // User must not be deleted (deleted = 0) and not be activated (disable = 1)
-        if ($user->getDisable() == 0) {
+        if ($user->getTxFemanagerInvitationcompleted()) {
             $this->addFlashMessage(LocalizationUtility::translate('userAlreadyConfirmed'), '', AbstractMessage::ERROR);
             $uriBuilder = $this->getControllerContext()->getUriBuilder();
             $uri = $uriBuilder->reset()
@@ -186,6 +198,8 @@ class InvitationController extends AbstractController implements LoggerAwareInte
                 ->uriFor('status');
             $this->redirectToUri($uri);
         }
+
+        $this->logger->warning("Confirming email for user ."  . $user->getEmail());
 
         $user->setDisable(false);
         $this->userRepository->update($user);
@@ -294,6 +308,7 @@ class InvitationController extends AbstractController implements LoggerAwareInte
             $this->logger->warning("Problem while ensuring prospect for user  "  . $user->getEmail());
         }
 
+        $user->setTxFemanagerInvitationcompleted(true);
         $this->userRepository->update($user);
         $this->persistenceManager->persistAll();
 

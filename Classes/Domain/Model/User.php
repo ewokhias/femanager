@@ -46,6 +46,11 @@ class User extends FrontendUser
     /**
      * @var bool
      */
+    protected $txFemanagerInvitationcompleted = false;
+
+    /**
+     * @var bool
+     */
     protected $isOnline = false;
 
     /**
@@ -229,6 +234,24 @@ class User extends FrontendUser
     public function getTxFemanagerConfirmedbyuser()
     {
         return $this->txFemanagerConfirmedbyuser;
+    }
+
+    /**
+     * @param \bool $txFemanagerInvitationcompleted
+     * @return User
+     */
+    public function setTxFemanagerInvitationcompleted($txFemanagerInvitationcompleted)
+    {
+        $this->txFemanagerInvitationcompleted = $txFemanagerInvitationcompleted;
+        return $this;
+    }
+
+    /**
+     * @return \bool
+     */
+    public function getTxFemanagerInvitationcompleted()
+    {
+        return $this->txFemanagerInvitationcompleted;
     }
 
     /**

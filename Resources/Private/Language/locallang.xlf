@@ -511,6 +511,9 @@
 			<trans-unit id="createFailedProfile">
 				<source>Profile creation failed</source>
 			</trans-unit>
+			<trans-unit id="deletedOldInvitation">
+				<source>Invitation expired, please register again!</source>
+			</trans-unit>
 			<trans-unit id="userAlreadyConfirmed">
 				<source>Profile is already confirmed</source>
 			</trans-unit>

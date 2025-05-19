@@ -119,6 +119,14 @@ $feUsersColumns = [
             'default' => 0,
         ]
     ],
+    'tx_femanager_invitationcompleted' => [
+        'exclude' => 1,
+        'label' => 'Regististrierung komplett abgeschlossen.',
+        'config' => [
+            'type' => 'check',
+            'default' => 0,
+        ]
+    ],
     'tx_femanager_terms' => [
         'exclude' => 1,
         'label' => 'LLL:EXT:femanager/Resources/Private/Language/locallang_db.xlf:' .
@@ -175,7 +183,7 @@ if ($extConf->get('femanager', 'overrideFeUserCountryFieldWithSelect')) {
     ];
 }
 
-$fields = 'crdate, tstamp, tx_femanager_confirmedbyuser, tx_femanager_confirmedbyadmin, tx_femanager_terms, ' .
+$fields = 'crdate, tstamp, tx_femanager_confirmedbyuser, tx_femanager_confirmedbyadmin, tx_femanager_invitationcompleted, tx_femanager_terms, ' .
     'tx_femanager_terms_date_of_acceptance';
 
 if (!\In2code\Femanager\Utility\ConfigurationUtility::isDisableLogActive()) {
