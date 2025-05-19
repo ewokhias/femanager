@@ -463,7 +463,7 @@ class InvitationController extends AbstractController implements LoggerAwareInte
             $user->getTitle(),
             $user->getTitleSuffix(),
             $this->genderIntToString($user->getGender()),
-            !empty($user->getDateOfBirth()) ? $user->getDateOfBirth()->format('Y-m-d') : null,
+            !empty($user->getDateOfBirth()) ? $user->getDateOfBirth()->format('Y-m-d') : '',
             $user->getNationality(),
             $user->getFamilyCount(),
             $user->getAddress(),

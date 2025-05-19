@@ -262,7 +262,7 @@ class EditController extends AbstractController implements LoggerAwareInterface
             $user->getTitle(),
             $user->getTitleSuffix(),
             $this->genderIntToString($user->getGender()),
-            !empty($user->getDateOfBirth()) ? $user->getDateOfBirth()->format('Y-m-d') : null,
+            !empty($user->getDateOfBirth()) ? $user->getDateOfBirth()->format('Y-m-d') : '',
             $user->getNationality(),
             $user->getFamilyCount(),
             $user->getAddress(),
@@ -284,5 +284,16 @@ class EditController extends AbstractController implements LoggerAwareInterface
         $this->logger->warning("Delete Portego repsonse for user " . $user->getEmail() . " is: " . $responseEmptyResult->getMessage());
 
         return true;
+    }
+
+    private function genderIntToString(int $gender): string
+    {
+        $result = "NoInformation";
+        if ($gender === 0) {
+            $result = "Male";
+        } elseif ($gender === 1) {
+            $result = "Female";
+        }
+        return $result;
     }
 }
